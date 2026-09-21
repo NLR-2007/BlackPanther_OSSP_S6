@@ -1,0 +1,9 @@
+# .hitignore — files HIT should never track (same syntax as .gitignore)
+# General
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+.env
+.idea/
+.vscode/
