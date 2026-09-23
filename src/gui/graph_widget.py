@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QWidget
 from PyQt6.QtGui import QPainter, QColor, QPen, QBrush, QLinearGradient, QPainterPath, QFont, QFontMetrics
-from PyQt6.QtCore import Qt, QPointF, QRectF
+from PyQt6.QtCore import Qt, QPointF, QRectF, QEvent
 
 class LiveGraphWidget(QWidget):
     def __init__(self, color="#0078D4", fill_gradient=True, title="CPU Usage", unit="%", max_val=100.0, parent=None):
@@ -16,6 +16,7 @@ class LiveGraphWidget(QWidget):
 
         self.setMinimumHeight(220)
         self.setMouseTracking(True)
+        self.setAttribute(Qt.WidgetAttribute.WA_Hover, True)
         self.hover_x = -1
 
     def update_data(self, history, second_history=None, max_val=None):
@@ -27,8 +28,21 @@ class LiveGraphWidget(QWidget):
             self.max_val = max_val
         self.update()
 
+    def event(self, ev):
+        if ev.type() in (QEvent.Type.HoverMove, QEvent.Type.MouseMove):
+            pos = ev.position() if hasattr(ev, 'position') else ev.pos()
+            self.hover_x = pos.x()
+            self.update()
+            return True
+        elif ev.type() in (QEvent.Type.HoverLeave, QEvent.Type.Leave):
+            self.hover_x = -1
+            self.update()
+            return True
+        return super().event(ev)
+
     def mouseMoveEvent(self, event):
-        self.hover_x = event.position().x()
+        pos = event.position() if hasattr(event, 'position') else event.pos()
+        self.hover_x = pos.x()
         self.update()
 
     def leaveEvent(self, event):
