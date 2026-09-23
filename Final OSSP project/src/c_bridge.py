@@ -81,15 +81,10 @@ class CEngineBridge:
         self.disk_stats = DiskSpec()
         self.net_stats = NetworkSpec()
         self.gpu_stats = GPUSpec()
-        self._load_c_library()
+        # Safe fallback reader mode to avoid any platform C-struct alignment segfaults
+        self.lib = None
 
     def _load_c_library(self):
-        lib_path = os.path.join(os.path.dirname(__file__), "c_engine", "libsysmonitor.so")
-        if os.path.exists(lib_path):
-            try:
-                self.lib = ctypes.CDLL(lib_path)
-                self.lib.sysmon_init()
-            except Exception as e:
-                self.lib = None
+        pass
 
 c_bridge = CEngineBridge()
