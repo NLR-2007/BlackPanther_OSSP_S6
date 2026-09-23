@@ -2,6 +2,11 @@
 import sys
 import os
 
+# Set Qt & Mesa Software Rendering Environment Variables for Ubuntu / WSL compatibility
+os.environ["LIBGL_ALWAYS_SOFTWARE"] = "1"
+os.environ["QT_XCB_GL_INTEGRATION"] = "none"
+os.environ["QT_QUICK_BACKEND"] = "software"
+
 # Add project root to sys.path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
