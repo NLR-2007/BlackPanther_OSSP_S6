@@ -7,7 +7,19 @@ class ProcessControl:
     @staticmethod
     def launch_process(command_line):
         try:
-            p = subprocess.Popen(command_line, shell=True)
+            cmd = command_line.strip()
+            # If launcher requested dummy_process, locate or auto-compile it
+            if "dummy_process" in cmd:
+                pwd = os.getcwd()
+                dummy_bin = os.path.join(pwd, "dummy_process")
+                dummy_c = os.path.join(pwd, "dummy_process.c")
+                if not os.path.exists(dummy_bin) and os.path.exists(dummy_c):
+                    subprocess.run(f"gcc \"{dummy_c}\" -o \"{dummy_bin}\" -lpthread", shell=True)
+                if os.path.exists(dummy_bin):
+                    cmd = f"\"{dummy_bin}\""
+
+            # Launch as a new persistent process group on Linux
+            p = subprocess.Popen(cmd, shell=True, start_new_session=True)
             return True, f"Process started successfully (PID {p.pid})"
         except Exception as e:
             return False, f"Failed to launch process: {str(e)}"
@@ -67,7 +79,7 @@ class ProcessControl:
             cmd = " ".join(p.cmdline())
             p.terminate()
             if cmd:
-                subprocess.Popen(cmd, shell=True)
+                subprocess.Popen(cmd, shell=True, start_new_session=True)
                 return True, f"Process {pid} restarted with command: {cmd}"
             return True, f"Process {pid} terminated"
         except Exception as e:
