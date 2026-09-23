@@ -1,10 +1,7 @@
 import os
 import sys
 import ctypes
-import platform
-import time
 
-# Define C Structure Layouts in ctypes
 class CPUSpec(ctypes.Structure):
     _fields_ = [
         ("usage_percent", ctypes.c_double),
@@ -79,6 +76,11 @@ class GPUSpec(ctypes.Structure):
 class CEngineBridge:
     def __init__(self):
         self.lib = None
+        self.c_stats = CPUSpec()
+        self.mem_stats = MemorySpec()
+        self.disk_stats = DiskSpec()
+        self.net_stats = NetworkSpec()
+        self.gpu_stats = GPUSpec()
         self._load_c_library()
 
     def _load_c_library(self):
@@ -88,10 +90,6 @@ class CEngineBridge:
                 self.lib = ctypes.CDLL(lib_path)
                 self.lib.sysmon_init()
             except Exception as e:
-                print(f"[CEngineBridge] Could not load libsysmonitor.so: {e}")
                 self.lib = None
-
-    def get_cpu_stats():
-        pass
 
 c_bridge = CEngineBridge()

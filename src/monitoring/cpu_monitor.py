@@ -9,7 +9,7 @@ class CPUMonitor:
         self.history = [0.0] * 60
 
     def get_metrics(self):
-        if c_bridge.lib:
+        if c_bridge.lib and hasattr(c_bridge, 'c_stats'):
             try:
                 c_bridge.lib.sysmon_read_cpu(c_bridge.c_stats)
                 usage = c_bridge.c_stats.usage_percent
@@ -49,17 +49,24 @@ class CPUMonitor:
         
         threads = 0
         handles = 0
-        for p in psutil.process_iter(['num_threads', 'num_handles']):
+        for p in psutil.process_iter(['num_threads']):
             try:
                 threads += p.info.get('num_threads') or 1
-                handles += p.info.get('num_handles') or 5
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                try:
+                    handles += p.num_fds() if hasattr(p, 'num_fds') else (p.num_handles() if hasattr(p, 'num_handles') else 5)
+                except Exception:
+                    handles += 5
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                 pass
         
         if threads == 0: threads = proc_count * 8
         if handles == 0: handles = proc_count * 25
         
-        uptime = int(time.time() - psutil.boot_time())
+        try:
+            uptime = int(time.time() - psutil.boot_time())
+        except Exception:
+            uptime = 86400
+
         log_cpus = psutil.cpu_count(logical=True) or 8
         cores = psutil.cpu_count(logical=False) or 4
         return usage, freq, proc_count, threads, handles, uptime, log_cpus, cores
