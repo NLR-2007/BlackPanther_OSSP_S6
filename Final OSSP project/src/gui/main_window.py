@@ -1,5 +1,5 @@
-from PyQt6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QStackedWidget, QLabel
-from PyQt6.QtGui import QFont, QIcon
+from PyQt6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QStackedWidget, QSizePolicy
+from PyQt6.QtGui import QFont, QKeyEvent
 from PyQt6.QtCore import QTimer, Qt
 
 from src.gui.sidebar_nav import SidebarNav
@@ -22,7 +22,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Smart Linux Resource Monitoring and Process Control System")
         self.resize(1280, 800)
-        self.setMinimumSize(1024, 640)
+        self.setMinimumSize(900, 600)
 
         # Apply Global Dark Windows 11 Task Manager Theme
         self.setStyleSheet("background-color: #191919; color: #FFFFFF;")
@@ -37,6 +37,7 @@ class MainWindow(QMainWindow):
 
         # Central Widget & Layout
         central_widget = QWidget(self)
+        central_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.setCentralWidget(central_widget)
 
         main_layout = QHBoxLayout(central_widget)
@@ -50,6 +51,7 @@ class MainWindow(QMainWindow):
 
         # 2. Main Content Container
         self.stacked_widget = QStackedWidget(self)
+        self.stacked_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
         # Views
         self.cpu_view = CPUView(self)
@@ -58,6 +60,9 @@ class MainWindow(QMainWindow):
         self.net_view = NetworkView(self)
         self.gpu_view = GPUView(self)
         self.proc_view = ProcessView(self)
+
+        for view in [self.cpu_view, self.mem_view, self.disk_view, self.net_view, self.gpu_view, self.proc_view]:
+            view.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
         self.stacked_widget.addWidget(self.cpu_view)    # Index 0
         self.stacked_widget.addWidget(self.mem_view)    # Index 1
@@ -76,6 +81,18 @@ class MainWindow(QMainWindow):
 
         # Initial Refresh
         self._update_all_telemetry()
+
+        # Open in Maximized Full Screen mode by default
+        self.showMaximized()
+
+    def keyPressEvent(self, event: QKeyEvent):
+        if event.key() == Qt.Key.Key_F11:
+            if self.isFullScreen():
+                self.showMaximized()
+            else:
+                self.showFullScreen()
+        else:
+            super().keyPressEvent(event)
 
     def _on_nav_selected(self, index):
         self.stacked_widget.setCurrentIndex(index)
