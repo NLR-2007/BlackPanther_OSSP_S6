@@ -45,22 +45,11 @@ class CPUMonitor:
         usage = psutil.cpu_percent(interval=None)
         freq_info = psutil.cpu_freq()
         freq = (freq_info.current / 1000.0) if freq_info and freq_info.current else 2.40
-        proc_count = len(psutil.pids())
+        pids = psutil.pids()
+        proc_count = len(pids)
         
-        threads = 0
-        handles = 0
-        for p in psutil.process_iter(['num_threads']):
-            try:
-                threads += p.info.get('num_threads') or 1
-                try:
-                    handles += p.num_fds() if hasattr(p, 'num_fds') else (p.num_handles() if hasattr(p, 'num_handles') else 5)
-                except Exception:
-                    handles += 5
-            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-                pass
-        
-        if threads == 0: threads = proc_count * 8
-        if handles == 0: handles = proc_count * 25
+        threads = proc_count * 6
+        handles = proc_count * 18
         
         try:
             uptime = int(time.time() - psutil.boot_time())
