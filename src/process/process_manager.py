@@ -6,7 +6,20 @@ class ProcessManager:
     def __init__(self):
         pass
 
+    def reap_zombies(self):
+        """Reap terminated child processes using non-blocking waitpid to prevent zombie entries."""
+        try:
+            while True:
+                pid, status = os.waitpid(-1, os.WNOHANG)
+                if pid <= 0:
+                    break
+        except (ChildProcessError, OSError):
+            pass
+
     def get_process_list(self):
+        # Clean up any defunct child processes
+        self.reap_zombies()
+
         processes = []
         total_ram_bytes = psutil.virtual_memory().total
 
@@ -53,7 +66,7 @@ class ProcessManager:
             return 'S', 'Sleeping'
         elif 'disk' in s or 'uninterruptible' in s:
             return 'D', 'Uninterruptible'
-        elif 'zombie' in s:
+        elif 'zombie' in s or 'defunct' in s:
             return 'Z', 'Zombie'
         elif 'stopped' in s or 'tracing' in s:
             return 'T', 'Stopped'
