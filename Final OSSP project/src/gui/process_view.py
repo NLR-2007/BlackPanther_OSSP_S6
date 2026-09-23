@@ -203,6 +203,8 @@ class ProcessView(QWidget):
 
         if target_row != -1:
             self.table.selectRow(target_row)
+        elif self.table.rowCount() > 0 and filter_text:
+            self.table.selectRow(0)
 
     def _apply_filter(self):
         self.update_processes(self.process_data)
@@ -222,6 +224,8 @@ class ProcessView(QWidget):
     def _on_new_task(self):
         dialog = ProcessControlDialog(self)
         if dialog.exec():
+            if hasattr(dialog, 'last_launched_pid') and dialog.last_launched_pid:
+                self.txt_search.setText(str(dialog.last_launched_pid))
             self._refresh_immediately()
 
     def _on_end_task(self):

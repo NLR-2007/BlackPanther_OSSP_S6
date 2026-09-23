@@ -9,8 +9,9 @@ class ProcessControlDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Run New Task (fork / exec)")
-        self.resize(540, 260)
+        self.resize(560, 260)
         self.setStyleSheet("background-color: #1F1F1F; color: #FFFFFF;")
+        self.last_launched_pid = None
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
@@ -22,7 +23,7 @@ class ProcessControlDialog(QDialog):
         layout.addWidget(lbl_desc)
 
         self.txt_cmd = QLineEdit(self)
-        self.txt_cmd.setPlaceholderText("e.g., ./dummy_process, sleep 500, xterm, gedit")
+        self.txt_cmd.setPlaceholderText("e.g., ./dummy_process, sleep 1000, xterm, gedit")
         self.txt_cmd.setStyleSheet("""
             QLineEdit {
                 background-color: #2D2D2D;
@@ -43,8 +44,8 @@ class ProcessControlDialog(QDialog):
         preset_layout.setContentsMargins(6, 6, 6, 6)
 
         btn_preset_c = QPushButton("⚙️ Run C Dummy Task", self)
-        btn_preset_cpu = QPushButton("🔥 CPU Stress Load", self)
-        btn_preset_sleep = QPushButton("💤 Sleep 500s Task", self)
+        btn_preset_cpu = QPushButton("🔥 Persistent CPU Stress", self)
+        btn_preset_sleep = QPushButton("💤 Sleep 1000s Task", self)
 
         for btn in [btn_preset_c, btn_preset_cpu, btn_preset_sleep]:
             btn.setStyleSheet("""
@@ -64,8 +65,8 @@ class ProcessControlDialog(QDialog):
             """)
 
         btn_preset_c.clicked.connect(lambda: self._run_preset("./dummy_process"))
-        btn_preset_cpu.clicked.connect(lambda: self._run_preset('python3 -c "import math; [math.sqrt(i) for i in range(10000000)]"'))
-        btn_preset_sleep.clicked.connect(lambda: self._run_preset("sleep 500"))
+        btn_preset_cpu.clicked.connect(lambda: self._run_preset('python3 -c "import time, math; exec(\'while True:\\n    [math.sqrt(x) for x in range(10000)]\\n    time.sleep(0.001)\')"'))
+        btn_preset_sleep.clicked.connect(lambda: self._run_preset("sleep 1000"))
 
         preset_layout.addWidget(btn_preset_c)
         preset_layout.addWidget(btn_preset_cpu)
@@ -120,7 +121,14 @@ class ProcessControlDialog(QDialog):
         if cmd:
             ok, msg = ProcessControl.launch_process(cmd)
             if ok:
-                QMessageBox.information(self, "Task Started", msg)
+                # Extract PID from message string if present
+                try:
+                    pid_str = msg.split("PID ")[1].split(")")[0]
+                    self.last_launched_pid = int(pid_str)
+                except Exception:
+                    self.last_launched_pid = None
+
+                QMessageBox.information(self, "Task Started", f"{msg}\n\nTask is running continuously and filtered in your process table!")
                 self.accept()
             else:
                 QMessageBox.critical(self, "Error Starting Task", msg)
