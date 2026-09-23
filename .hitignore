@@ -1,0 +1,24 @@
+# .hitignore — files HIT should never track (same syntax as .gitignore)
+# General
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+.env
+.idea/
+.vscode/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.coverage
+*.log
+.env

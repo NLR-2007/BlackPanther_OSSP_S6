@@ -1,0 +1,26 @@
+[
+ {
+  "id": 1,
+  "time": 1790159657,
+  "command": "commit",
+  "description": "commit 4a1b5c1: OSSP NEW PROJECT",
+  "before": {
+   "head_symbolic": "refs/heads/main",
+   "head_sha": null,
+   "branches": {},
+   "tags": {}
+  },
+  "after": {
+   "head_symbolic": "refs/heads/main",
+   "head_sha": "4a1b5c1af0c300cadda550aa284a54129d5045b0",
+   "branches": {
+    "main": "4a1b5c1af0c300cadda550aa284a54129d5045b0"
+   },
+   "tags": {}
+  },
+  "index_before": "1790159657061-before.idx",
+  "index_after": "1790159657123-after.idx",
+  "worktree_snapshot": null,
+  "undone": false
+ }
+]
