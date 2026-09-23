@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QFont, QColor, QAction
 from PyQt6.QtCore import Qt, pyqtSignal
 from src.process.process_control import ProcessControl
+from src.process.process_manager import ProcessManager
 from src.gui.process_details_dialog import ProcessDetailsDialog
 from src.gui.process_control_dialog import ProcessControlDialog
 
@@ -13,6 +14,7 @@ class ProcessView(QWidget):
         super().__init__(parent)
         self.setStyleSheet("background-color: #1F1F1F;")
         self.process_data = []
+        self.proc_manager = ProcessManager()
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(16, 16, 16, 16)
@@ -136,10 +138,13 @@ class ProcessView(QWidget):
         self.process_data = proc_list
         filter_text = self.txt_search.text().lower()
 
-        # Temporarily disable sorting while updating items
+        # Save selected PID to restore selection after refresh
+        selected_pid = self._get_selected_pid()
+
         self.table.setSortingEnabled(False)
         self.table.setRowCount(0)
 
+        target_row = -1
         for p in proc_list:
             if filter_text and filter_text not in p["name"].lower() and filter_text not in str(p["pid"]):
                 continue
@@ -151,6 +156,9 @@ class ProcessView(QWidget):
             item_pid = QTableWidgetItem()
             item_pid.setData(Qt.ItemDataRole.DisplayRole, p["pid"])
             self.table.setItem(row, 0, item_pid)
+
+            if selected_pid and p["pid"] == selected_pid:
+                target_row = row
 
             # Name
             self.table.setItem(row, 1, QTableWidgetItem(p["name"]))
@@ -193,8 +201,15 @@ class ProcessView(QWidget):
 
         self.table.setSortingEnabled(True)
 
+        if target_row != -1:
+            self.table.selectRow(target_row)
+
     def _apply_filter(self):
         self.update_processes(self.process_data)
+
+    def _refresh_immediately(self):
+        proc_list = self.proc_manager.get_process_list()
+        self.update_processes(proc_list)
 
     def _get_selected_pid(self):
         selected = self.table.selectedItems()
@@ -206,24 +221,28 @@ class ProcessView(QWidget):
 
     def _on_new_task(self):
         dialog = ProcessControlDialog(self)
-        dialog.exec()
+        if dialog.exec():
+            self._refresh_immediately()
 
     def _on_end_task(self):
         pid = self._get_selected_pid()
         if pid:
             ok, msg = ProcessControl.terminate_process(pid)
+            self._refresh_immediately()
             QMessageBox.information(self, "Process Control", msg)
 
     def _on_pause_task(self):
         pid = self._get_selected_pid()
         if pid:
             ok, msg = ProcessControl.pause_process(pid)
+            self._refresh_immediately()
             QMessageBox.information(self, "Process Control", msg)
 
     def _on_resume_task(self):
         pid = self._get_selected_pid()
         if pid:
             ok, msg = ProcessControl.resume_process(pid)
+            self._refresh_immediately()
             QMessageBox.information(self, "Process Control", msg)
 
     def _on_inspect_task(self):
@@ -251,12 +270,16 @@ class ProcessView(QWidget):
         action = menu.exec(self.table.viewport().mapToGlobal(pos))
         if action == act_end:
             ProcessControl.terminate_process(pid)
+            self._refresh_immediately()
         elif action == act_kill:
             ProcessControl.kill_process(pid)
+            self._refresh_immediately()
         elif action == act_pause:
             ProcessControl.pause_process(pid)
+            self._refresh_immediately()
         elif action == act_resume:
             ProcessControl.resume_process(pid)
+            self._refresh_immediately()
         elif action == act_inspect:
             dialog = ProcessDetailsDialog(pid, self)
             dialog.exec()
